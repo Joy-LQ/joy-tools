@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deansgate 联排出租对比</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a surveyor's worksheet. Sticky result strip on top, controls left, evidence right. */
+:root{
+  --paper:#eef1f4; --card:#ffffff; --ink:#14213d; --muted:#5b6679; --line:#d5dbe3;
+  --a:#17705f; --b:#c2570c; --c:#6b7689; --good:#1f8a5b; --bad:#c0392b; --accent:#14213d;
+  --display:"Familjen Grotesk","PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+  --body:"IBM Plex Sans","PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f1623; --card:#172033; --ink:#e8edf5; --muted:#9aa6bb; --line:#2a3550;
+    --a:#3fc2a6; --b:#f0924f; --c:#93a0b8; --good:#46c88b; --bad:#ef7a6c; --accent:#e8edf5; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f1623; --card:#172033; --ink:#e8edf5; --muted:#9aa6bb; --line:#2a3550;
+  --a:#3fc2a6; --b:#f0924f; --c:#93a0b8; --good:#46c88b; --bad:#ef7a6c; --accent:#e8edf5; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.55 var(--body);-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+a{color:var(--a)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+
+/* sticky strip */
+.strip{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line)}
+.strip .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-top:8px;padding-bottom:8px}
+.mini{display:flex;flex-direction:column;border-left:4px solid var(--c);padding:2px 8px;min-width:0}
+.mini small{color:var(--muted);font-size:11px;line-height:1.2}
+.mini b{font-size:17px;line-height:1.25;white-space:nowrap}
+.mini.a{border-color:var(--a)} .mini.b{border-color:var(--b)} .mini.c{border-color:var(--c)}
+
+header.top{padding:22px 0 8px}
+header.top .kicker{font:500 12px/1 var(--mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+header.top h1{font-size:clamp(26px,5.2vw,40px);line-height:1.1;margin:8px 0 10px;font-weight:700}
+header.top p{margin:0;color:var(--muted);max-width:68ch}
+
+.verdict{background:var(--ink);color:var(--paper);border-radius:10px;padding:16px 18px;margin:14px 0 16px}
+:root[data-theme="dark"] .verdict{background:#223052;color:#e8edf5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .verdict{background:#223052;color:#e8edf5}}
+.verdict h2{font-size:clamp(18px,3.4vw,24px);line-height:1.25;font-weight:600}
+.verdict p{margin:8px 0 0;opacity:.88;font-size:14px}
+
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.tile{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--c);border-radius:8px;padding:12px 14px;min-width:0}
+.tile.a{border-top-color:var(--a)} .tile.b{border-top-color:var(--b)} .tile.c{border-top-color:var(--c)}
+.tile h3{font-size:15px;font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{font:500 11px/1 var(--mono);background:var(--good);color:#fff;padding:3px 6px;border-radius:99px}
+.tile .big{font-size:clamp(22px,4vw,30px);font-weight:600;margin:6px 0 2px;line-height:1.1}
+.tile .sub{color:var(--muted);font-size:12.5px;line-height:1.5}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+
+.main{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start;padding-bottom:30px}
+@media (min-width:960px){.main{grid-template-columns:350px minmax(0,1fr)}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.controls{display:flex;flex-direction:column;gap:18px}
+@media (min-width:960px){.controls{position:sticky;top:72px;max-height:calc(100vh - 90px);overflow:auto}}
+.group h3{font-size:12px;font:600 12px/1.2 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.field{margin-bottom:12px}
+.field .row{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:13.5px}
+.field .row output{font:500 14px var(--mono);white-space:nowrap}
+.hint{color:var(--muted);font-size:12px;margin-top:2px}
+input[type=range]{width:100%;accent-color:var(--a);margin:6px 0 0;height:28px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{font:500 13px var(--body);background:transparent;color:var(--ink);border:0;padding:9px 6px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.radios{display:flex;flex-direction:column;gap:6px}
+.radios label{display:flex;gap:8px;align-items:flex-start;font-size:13px;cursor:pointer}
+.radios input{margin-top:3px;accent-color:var(--a)}
+:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+details.adv summary{cursor:pointer;font-weight:600;font-size:14px;padding:4px 0}
+.advgrid{display:grid;grid-template-columns:1fr 104px;gap:8px 10px;align-items:center;margin-top:10px;font-size:13px}
+.advgrid input{width:100%;font:500 13px var(--mono);padding:6px 7px;border:1px solid var(--line);border-radius:5px;background:var(--paper);color:var(--ink);text-align:right}
+.advgrid .sec{grid-column:1/-1;font:600 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:8px}
+.btn{font:500 13px var(--body);padding:8px 12px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;cursor:pointer}
+.btn:hover{background:var(--paper)}
+
+.results{display:flex;flex-direction:column;gap:18px;min-width:0}
+.results h2{font-size:19px;margin-bottom:4px}
+.results .lead{color:var(--muted);margin:0 0 12px;font-size:13.5px}
+.chartbox svg{width:100%;height:auto;display:block}
+.chartbox text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.chartbox .lab{font-weight:600;font-size:11.5px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+thead th{font:600 12px var(--mono);color:var(--muted)}
+tr.tot td{font-weight:600;background:var(--paper)}
+.heat td,.heat th{padding:0;border:1px solid var(--card)}
+.heat th{padding:6px 8px;font:500 12px var(--mono);color:var(--muted);background:transparent}
+.heat button{display:block;width:100%;min-width:52px;padding:9px 4px;font:500 12px var(--mono);border:0;background:transparent;color:var(--ink);cursor:pointer}
+.heat button.cur{outline:3px solid var(--ink);outline-offset:-3px;font-weight:700}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.sw{display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:-1px;margin-right:5px}
+.be{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+.be div{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.be b{display:block;font-size:22px}
+.be span{font-size:12.5px;color:var(--muted)}
+.qual td{white-space:normal;text-align:left;vertical-align:top;font-size:13px;min-width:150px}
+.qual th{text-align:left}
+.risks{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.risk{border:1px solid var(--line);border-left:4px solid var(--b);border-radius:6px;padding:10px 12px;font-size:13px}
+.risk b{display:block;margin-bottom:3px}
+.src{font-size:12.5px;color:var(--muted);columns:1}
+@media (min-width:760px){.src{columns:2;column-gap:28px}}
+.src li{margin-bottom:6px;break-inside:avoid}
+footer{padding:6px 0 40px;color:var(--muted);font-size:12.5px}
+@media (max-width:560px){
+  .tiles{grid-template-columns:1fr}
+  .be{grid-template-columns:1fr}
+  .mini b{font-size:14.5px}
+}
+@media (prefers-reduced-motion:no-preference){.tile .big,.mini b{transition:color .2s}}
+
+.langbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.lang{display:inline-grid;grid-auto-flow:column;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex:none}
+.lang button{font:500 13px var(--body);background:transparent;color:var(--ink);border:0;padding:7px 12px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.window{display:inline-block;margin-top:10px;font:500 12px var(--mono);border:1px dashed var(--muted);color:var(--ink);padding:4px 8px;border-radius:5px}
+
+[hidden]{display:none!important}
+.tabs{display:flex;gap:6px;margin:14px 0 4px;border-bottom:1px solid var(--line)}
+.tabs button{font:600 14px var(--display);background:transparent;color:var(--muted);border:0;border-bottom:3px solid transparent;padding:10px 14px;cursor:pointer;margin-bottom:-1px}
+.tabs button[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--a)}
+.notes{margin:10px 0 0;padding-left:18px;font-size:13.5px}
+.notes li{margin-bottom:7px}
+.warnbox{border:1px solid var(--line);border-left:4px solid var(--bad);border-radius:6px;padding:10px 12px;font-size:13px;margin-top:12px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;cursor:pointer;margin-bottom:8px}
+.chk input{margin-top:3px;accent-color:var(--a)}
+</style>
+</head>
+<body>
+
+<div class="strip" aria-label="Summary">
+  <div class="wrap">
+    <div class="mini a"><small id="stripLA">–</small><b class="num" id="sA">–</b></div>
+    <div class="mini b"><small id="stripLB">–</small><b class="num" id="sB">–</b></div>
+    <div class="mini c"><small id="stripLC">–</small><b class="num" id="sC">–</b></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="langbar">
+      <div class="kicker" data-i18n="kicker">–</div>
+      <div class="lang" id="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="zh">中文</button>
+        <button type="button" data-lang="en">English</button>
+      </div>
+    </div>
+    <h1 data-i18n="h1">–</h1>
+    <p data-i18n="intro">–</p>
+    <span class="window" data-i18n="window">–</span>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Views">
+    <button type="button" data-tab="let" data-i18n="tabLet">–</button>
+    <button type="button" data-tab="own" data-i18n="tabOwn">–</button>
+  </nav>
+
+  <div id="viewLet">
+  <section class="verdict" aria-live="polite">
+    <h2 id="vHead">–</h2>
+    <p id="vSub">–</p>
+  </section>
+
+  <section class="tiles" id="tiles"></section>
+
+  <div class="main">
+    <aside class="panel controls">
+      <div class="group">
+        <h3 data-i18n="gMarket">–</h3>
+        <div class="field">
+          <div class="seg" id="caseSeg" role="group">
+            <button type="button" data-case="cons" data-i18n="cons">–</button>
+            <button type="button" data-case="base" data-i18n="base">–</button>
+            <button type="button" data-case="opt" data-i18n="opt">–</button>
+          </div>
+          <div class="hint" data-i18n="caseHint">–</div>
+        </div>
+        <div class="field">
+          <div class="row"><label for="occ" data-i18n="lOcc">–</label><output id="occ_o" for="occ"></output></div>
+          <input type="range" id="occ" min="30" max="85" step="1">
+          <div class="hint" data-i18n="hOcc">–</div>
+        </div>
+        <div class="field">
+          <div class="row"><label for="adr" data-i18n="lAdr">–</label><output id="adr_o" for="adr"></output></div>
+          <input type="range" id="adr" min="100" max="320" step="5">
+          <div class="hint" data-i18n="hAdr">–</div>
+        </div>
+        <div class="field">
+          <div class="row"><label for="bMgmt" data-i18n="lMgmt">–</label><output id="bMgmt_o" for="bMgmt"></output></div>
+          <input type="range" id="bMgmt" min="0" max="30" step="1">
+        </div>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="gA">–</h3>
+        <div class="field">
+          <div class="row"><label for="aRent" data-i18n="lRent">–</label><output id="aRent_o" for="aRent"></output></div>
+          <input type="range" id="aRent" min="1200" max="1800" step="25">
+          <div class="hint" data-i18n="hRent">–</div>
+        </div>
+        <div class="field">
+          <div class="row"><label for="aVoid" data-i18n="lVoid">–</label><output id="aVoid_o" for="aVoid"></output></div>
+          <input type="range" id="aVoid" min="0" max="6" step="1">
+        </div>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="gTax">–</h3>
+        <div class="field">
+          <div class="seg" id="taxSeg" role="group">
+            <button type="button" data-tax="basic" data-i18n="taxBasic">–</button>
+            <button type="button" data-tax="high" data-i18n="taxHigh">–</button>
+          </div>
+          <div class="hint" id="taxHint"></div>
+        </div>
+        <div class="field">
+          <div class="hint" style="margin:0 0 6px;color:var(--ink);font-size:13px" data-i18n="ctTitle">–</div>
+          <div class="radios" id="ctRadios">
+            <label><input type="radio" name="ct" value="2"><span data-i18n="ct2">–</span></label>
+            <label><input type="radio" name="ct" value="1"><span data-i18n="ct1">–</span></label>
+            <label><input type="radio" name="ct" value="0"><span data-i18n="ct0">–</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="radios" style="flex-direction:row;gap:8px;align-items:flex-start;font-size:13px;cursor:pointer"><input type="checkbox" id="listed" style="margin-top:3px;accent-color:var(--a)"><span data-i18n="listed">–</span></label>
+        </div>
+      </div>
+
+      <details class="adv">
+        <summary data-i18n="more">–</summary>
+        <div class="advgrid" id="adv"></div>
+      </details>
+      <button class="btn" type="button" id="reset" data-i18n="reset">–</button>
+    </aside>
+
+    <div class="results">
+      <section class="panel chartbox">
+        <h2 data-i18n="hChart">–</h2>
+        <p class="lead" data-i18n="leadChart">–</p>
+        <div id="chart"></div>
+      </section>
+      <section class="panel">
+        <h2 data-i18n="hDetail">–</h2>
+        <p class="lead" data-i18n="leadDetail">–</p>
+        <div class="scroll"><table id="detail"></table></div>
+      </section>
+      <section class="panel">
+        <h2 data-i18n="hBE">–</h2>
+        <p class="lead" data-i18n="leadBE">–</p>
+        <div class="be">
+          <div><b class="num" id="beOcc">–</b><span id="beOccS">–</span></div>
+          <div><b class="num" id="beAdr">–</b><span id="beAdrS">–</span></div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2 data-i18n="hHeat">–</h2>
+        <p class="lead" data-i18n="leadHeat">–</p>
+        <div class="scroll"><table class="heat" id="heat"></table></div>
+        <div class="legend"><span><i class="sw" style="background:color-mix(in srgb,var(--good) 45%,transparent)"></i><span data-i18n="lgB">–</span></span><span><i class="sw" style="background:color-mix(in srgb,var(--bad) 45%,transparent)"></i><span data-i18n="lgA">–</span></span><span data-i18n="lgCur">–</span></div>
+      </section>
+      <section class="panel">
+        <h2 data-i18n="hQual">–</h2>
+        <div class="scroll"><table class="qual" id="qual"></table></div>
+      </section>
+      <section class="panel">
+        <h2 data-i18n="hRisk">–</h2>
+        <div class="risks" id="risks" style="margin-top:10px"></div>
+      </section>
+      <section class="panel">
+        <h2 data-i18n="hSrc">–</h2>
+        <ul class="src" id="src" style="margin-top:10px;padding-left:18px"></ul>
+      </section>
+    </div>
+  </div>
+  </div>
+
+  <div id="viewOwn" hidden>
+    <section class="verdict" aria-live="polite">
+      <h2 id="oHead">–</h2>
+      <p id="oSub">–</p>
+    </section>
+    <section class="tiles" id="oTiles"></section>
+    <div class="main">
+      <aside class="panel controls">
+        <div class="group">
+          <h3 data-i18n="oG1">–</h3>
+          <div class="field"><div class="row"><label for="oV" data-i18n="oLV">–</label><output id="oV_o" for="oV"></output></div><input type="range" id="oV" min="250000" max="1200000" step="10000"><div class="hint" data-i18n="oHV">–</div></div>
+          <div class="field"><div class="row"><label for="oCb" data-i18n="oLCb">–</label><output id="oCb_o" for="oCb"></output></div><input type="range" id="oCb" min="100000" max="1000000" step="10000"><div class="hint" data-i18n="oHCb">–</div></div>
+          <div class="field"><div class="row"><label for="oG" data-i18n="oLG">–</label><output id="oG_o" for="oG"></output></div><input type="range" id="oG" min="0" max="6" step="0.5"></div>
+          <div class="field"><div class="row"><label for="oN" data-i18n="oLN">–</label><output id="oN_o" for="oN"></output></div><input type="range" id="oN" min="0" max="20" step="1"><div class="hint" data-i18n="oHN">–</div></div>
+        </div>
+        <div class="group">
+          <h3 data-i18n="oG2">–</h3>
+          <div class="field"><div class="row"><label for="oRate" data-i18n="oLRate">–</label><output id="oRate_o" for="oRate"></output></div><input type="range" id="oRate" min="20" max="45" step="5"></div>
+          <label class="chk"><input type="checkbox" id="oPlus2"><span data-i18n="oPlus2">–</span></label>
+        </div>
+        <div class="group">
+          <h3 data-i18n="oG3">–</h3>
+          <div class="field"><div class="seg" id="oModeSeg" role="group"><button type="button" data-mode="div" data-i18n="oModeDiv">–</button><button type="button" data-mode="loan" data-i18n="oModeLoan">–</button></div><div class="hint" data-i18n="oHMode">–</div></div>
+          <label class="chk"><input type="checkbox" id="oSdltRel"><span data-i18n="oSdltRel">–</span></label>
+          <label class="chk"><input type="checkbox" id="oS162"><span data-i18n="oS162">–</span></label>
+          <div class="field"><div class="row"><label for="oComp" data-i18n="oLComp">–</label><output id="oComp_o" for="oComp"></output></div><input type="range" id="oComp" min="0" max="4000" step="100"><div class="hint" data-i18n="oHComp">–</div></div>
+          <div class="field"><div class="row"><label for="oPrem" data-i18n="oLPrem">–</label><output id="oPrem_o" for="oPrem"></output></div><input type="range" id="oPrem" min="0" max="1" step="0.05"><div class="hint" data-i18n="oHPrem">–</div></div>
+        </div>
+        <details class="adv"><summary data-i18n="more">–</summary><div class="advgrid" id="oAdv"></div></details>
+        <button class="btn" type="button" id="oReset" data-i18n="reset">–</button>
+      </aside>
+      <div class="results">
+        <section class="panel"><h2 data-i18n="oHUp">–</h2><p class="lead" data-i18n="oLeadUp">–</p><div class="scroll"><table id="oUp"></table></div></section>
+        <section class="panel"><h2 data-i18n="oHAnn">–</h2><p class="lead" id="oLeadAnn">–</p><div class="scroll"><table id="oAnn"></table></div></section>
+        <section class="panel chartbox"><h2 data-i18n="oHChart">–</h2><p class="lead" data-i18n="oLeadChart">–</p><div id="oChart"></div></section>
+        <section class="panel"><h2 data-i18n="oHNotes">–</h2><ul class="notes" id="oNotes"></ul></section>
+        <section class="panel"><h2 data-i18n="oHSrc">–</h2><ul class="src" id="oSrc" style="margin-top:10px;padding-left:18px"></ul></section>
+      </div>
+    </div>
+  </div>
+  <footer data-i18n="foot">–</footer>
+</div>
+<script>
+(function(){
+  var DAYS=[31,31,28,31,30,31,30,31,31], SEAS=[.95,.8,.85,.95,1,1.1,1.1,1.15,1.15], RAMP=[.5,.8,.9,1,1,1,1,1,1];
+  var CASES={cons:{occ:48,adr:170},base:{occ:58,adr:205},opt:{occ:68,adr:240}};
+  var DEFAULTS={
+    caseSel:'base',occ:58,adr:205,bMgmt:18,aRent:1475,aVoid:3,taxMode:'high',ctMode:2,listed:true,
+    mortBal:100000,mortRate:3.5,bUplift:0,ctAnnual:2312.04,voidUtil:90,insLong:30,mgmtLong:10,maintLong:3,
+    aFind:450,aChange:250,avgStay:3,plat:15.5,clean:75,linen:18,consum:8,energy:260,water:50,wifi:50,
+    bMaint:60,bIns:75,setup:3400,setupDed:50
+  };
+  var ADV=[
+    ['sec',['房贷','Mortgage']],['mortBal',['房贷本金 £','Mortgage balance £'],1],['mortRate',['利率 %','Interest rate %'],0.05],['bUplift',['Airbnb 利率上浮 %','Airbnb rate uplift %'],0.05],
+    ['sec',['议会税与空置','Council tax and void']],['ctAnnual',['议会税全年账单 £','Council tax per year £'],1],['voidUtil',['空置期水电网 £/月','Void utilities £/month'],5],
+    ['sec',['长租（A）','Long let (A)']],['mgmtLong',['长租管理费 %','Letting management fee %'],1],['maintLong',['维修储备 %','Repairs reserve %'],1],['insLong',['房东保险 £/月','Landlord insurance £/month'],1],['aFind',['找租客费 £','Tenant-find fee £'],10],['aChange',['搬离清洁 £','Move-out clean £'],10],
+    ['sec',['Airbnb（B）','Airbnb (B)']],['plat',['平台费 %','Airbnb fee %'],0.5],['avgStay',['平均每单晚数','Average nights per stay'],0.1],['clean',['保洁 £/单','Cleaning £/stay'],1],['linen',['布草洗涤 £/单','Linen and laundry £/stay'],1],['consum',['消耗品 £/单','Supplies £/stay'],1],
+    ['energy',['燃气电 £/月','Gas and electric £/month'],5],['water',['水费 £/月','Water £/month'],1],['wifi',['宽带+TV £/月','Broadband and TV £/month'],1],['bMaint',['维修杂项 £/月','Repairs and extras £/month'],1],['bIns',['短租保险 £/月','Short-let insurance £/month'],1],
+    ['setup',['一次性布置 £','One-off set-up £'],50],['setupDed',['布置费可抵税 %','Set-up cost tax-deductible %'],5]
+  ];
+  var SRC=[
+    ['https://www.houst.com/airbnb-management/deansgate',['Houst：Deansgate 两居 £219 @70%','Houst: Deansgate 2-bed £219 at 70%']],
+    ['https://www.guestfavorites.com/airbnb-occupancy-rates-in-manchester-greater-manchester-england',['GuestFavorites：Manchester 入住率54%、£141','GuestFavorites: Manchester 54% occupancy, £141']],
+    ['https://airbtics.com/top-airbnb-listings-in-manchester-united-kingdom/',['Airbtics：Manchester 中位入住率58%、£116','Airbtics: Manchester median 58%, £116']],
+    ['https://www.houst.com/blog/short-term-regulation-manchester',['Houst：Manchester 短租规则、140/70天','Houst: Manchester short-let rules, 140/70 nights']],
+    ['https://www.clydeco.com/zh/insights/2026/10/england-s-short-let-registration-scheme-what-the-m',['Clyde & Co：短租登记2027年3月','Clyde & Co: short-let register, March 2027']],
+    ['https://www.manchester.gov.uk/info/500336/how_council_tax_is_worked_out_data_and_policies/5990/how_we_work_out_the_council_tax_for_empty_properties/2',['Manchester 议会：空置与二套房议会税','Manchester City Council: empty homes and second homes']],
+    ['https://uktax.tools/council-tax-manchester/',['Manchester 2026/27 议会税（Band D £2,312.04）','Manchester 2026/27 council tax (Band D £2,312.04)']],
+    ['https://england.shelter.org.uk/professional_resources/legal/possession_and_eviction/grounds_for_possession/possession_when_a_landlord_wants_to_sell_or_move_in',['Shelter：卖房条款1A，头12个月不可用','Shelter: Ground 1A, not usable in first 12 months']],
+    ['https://www.propertymark.co.uk/resource/ground-4a-deadlines-take-centre-stage-as-students-prepare-to-move-in.html',['Propertymark：学生HMO第4A条','Propertymark: student HMO Ground 4A']],
+    ['https://www.hostfully.com/blog/airbnb-host-fees/',['Hostfully：Airbnb 15.5% 费率','Hostfully: Airbnb 15.5% host fee']],
+    ['https://www.houst.com/blog/airbnb-management-fees-guide',['Houst：代管费15–25%、保洁£45–150','Houst: management 15–25%, cleaning £45–150']],
+    ['https://www.sjp.co.uk/individuals/news/owners-urged-to-review-holiday-lets-as-tax-changes-bite',['SJP：FHL取消、2027年4月税率+2%','SJP: FHL abolished, rates +2% from April 2027']]
+  ];
+  var D={
+    zh:{
+
+      tabLet:'出租方案：长租 / Airbnb / 空置',tabOwn:'持有方式：个人 vs 公司',
+      stripSets:{let:['A 长租 · 税后','B Airbnb · 税后','C 空置 · 税后'],own:['前期一次性现金','公司路线每年税后差','出售时累计差（公司−个人）']},
+      oG1:'房产（占位数字，请替换）',oLV:'现在的市场价值',oHV:'占位：£550,000。请换成估价或同街成交价。',oLCb:'当初买入成本（含印花税、律师费、装修）',oHCb:'占位：£350,000。决定提前缴多少资本利得税。',oLG:'房价年增长',oLN:'持有多少年后出售',oHN:'0年 = 立刻转公司再卖掉。',
+      oG2:'夫妻个人税',oLRate:'边际所得税率',oPlus2:'计入2027年4月起财产收入税率+2个百分点',
+      oG3:'公司路线',oModeDiv:'分红取钱',oModeLoan:'股东贷款还款',oHMode:'分红按39.35%缴个人税。股东贷款还款不是收入，但这类安排受税务局关注，要专业人士设计。',
+      oSdltRel:'申请"出租业务"豁免，避免17%统一印花税率（价值超£500k时）',oS162:'申请 s162 营业转让豁免，免当期资本利得税（出租要像一门生意，约每周20小时）',
+      oLComp:'公司每年额外运营费（会计、报税、年检）',oHComp:'会计费通常£1,000–3,000/年。',oLPrem:'公司按揭利率比个人高',oHPrem:'市场上约高0.3–0.5个百分点。',
+      oHUp:'前期一次性成本',oLeadUp:'把房子转进自己的公司，税务上视为按市价卖给公司。不管有没有收到钱，都要缴。',
+      oHAnn:'持有期间：每年到手',oHChart:'公司路线比个人路线累计多/少多少',oLeadChart:'横轴是几年后出售。曲线在零以上才表示公司路线更好。已含前期成本、每年运营费、出售时的税。',
+      oHNotes:'关键规则',oHSrc:'来源（2026-11-16 查询）',
+      oUpRows:['提前缴的资本利得税（卖房时本来也要缴，差别在时间）','印花税 SDLT（按市价，含5%附加）','律师/转让费','估值费','会计师税务计算','重新抵押手续费','成立公司 + 土地登记费'],
+      oUpTotal:'前期现金合计',oUpDead:'其中永久损耗（不含资本利得税）',
+      oAnnRows:['年经营利润（未扣利息）','房贷利息','公司额外运营费','利润税（个人所得税 / 公司税）','留在公司的税后利润','分红或取钱的个人税','每年到手'],
+      oAnnHead:['个人持有','公司 + 分红','公司 + 还股东贷款'],
+      oLeadAnn:function(op){return '按学生市场常态（月租 £'+Number(S.stRent||2050).toLocaleString('en-GB')+'×'+O.stMonths+'个月），年经营利润约 '+gbp(op)+'。公司路线要多付运营费和更高的利率。'},
+      oTileUp:'前期一次性现金',oTileUpSub:function(cgt,dead){return '其中 资本利得税 '+gbp(cgt)+'，永久损耗 '+gbp(dead)},
+      oTileAnn:'每年到手：公司 − 个人',oTileAnnSub:function(d,l){return '分红路线 '+gbp(d,true)+'；还股东贷款 '+gbp(l,true)},
+      oTileN:function(n){return n===0?'立刻出售的累计差':n+'年后出售的累计差'},oTileNSub:function(be){return be===null?'40年内追不平':'公司路线第 '+be+' 年才追平'},
+      oHeadNeg:function(n,x){return '按当前假设，转进公司更差：持有'+n+'年后出售，累计比个人持有少 '+x+'。'},
+      oHeadPos:function(n,x){return '按当前假设，转进公司更好：持有'+n+'年后出售，累计比个人持有多 '+x+'。'},
+      oSub:function(u,dead,be,sellSoon){return '前期要付 '+u+'，其中 '+dead+' 是永久损耗。'+(be===null?' 40年内都追不回前期成本。':' 要持有约 '+be+' 年才回本。')+(sellSoon?' 你们打算短期内卖房，这笔成本基本白付。':'')},
+      oNotes:[
+        '房产目前没有在出租，很难证明是"一门生意"，所以 s162 豁免多半用不上。税务局一般接受每周约20小时的经营活动，门槛很高。',
+        '转给自己的公司按市价算，资本利得税和印花税都按市价，不是按剩余房贷 £100,000。',
+        '公司没有每人£3,000的资本利得免税额。出售时公司按19%–25%缴公司税，之后取钱还要缴个人税。',
+        '公司的好处只有两处：房贷利息全额抵税，公司税率比45%低。但把钱取出来的分红税39.35%，合计往往不比个人持有低；只有利润留在公司才明显占优。',
+        '现有房贷要重新融资到公司名下，利率通常高0.3–0.5个百分点，董事可能要个人担保。',
+        '如果9个月内有可能卖房，转公司只会多花钱。要长期持有、利润不取出，才有讨论的价值。'],
+      oSrc:[
+        ['https://www.taxinsider.co.uk/tax-articles/restructuring-a-legacy-portfolio-incorporation','Tax Insider：转公司触发资本利得税和印花税'],
+        ['https://www.ukpropertyaccountants.co.uk/can-you-gift-a-property-to-a-limited-company/','UK Property Accountants：关联公司按市价'],
+        ['https://www.taxationweb.co.uk/tax-articles/business-tax/incorporation-relief.html','Taxation Web：s162 与 Ramsay 案'],
+        ['https://bkl.co.uk/?p=77414','BKL：转公司的资本利得税和印花税'],
+        ['https://www.accountingweb.co.uk/node/227811','AccountingWeb：2026/27 公司税与分红税率'],
+        ['https://uktax.tools/capital-gains-tax-rates/','uktax.tools：2026/27 资本利得税率'],
+        ['https://www.kaeltripton.com/property/ltd-company-buy-to-let-uk-2026/','Kaeltripton：公司按揭加价、留存才省税'],
+        ['https://www.augustapp.com/partnerships/is-forming-a-limited-company-right-for-uk-landlords','August：公司会计费约£1,000–3,000/年'],
+        ['https://www.property118.com/incorporation-buy-to-let-mortgages-2025/','Property118：按揭需重新融资到公司'],
+        ['https://taxpolicy.org.uk/2023/09/22/amazing/','Tax Policy Associates：股东贷款安排的争议']],
+      oAdv:[['sec','费用'],['legal','律师/转让费 £',100],['val','估值费 £',50],['acct','会计师税务计算 £',100],['remort','重新抵押手续费 £',100],['form','公司成立+土地登记 £',50],['sec','税率'],['cgt','资本利得税率 %',1],['div','分红税率 %',0.5],['aea','每人资本利得免税额 £',500],['owners','持有人数',1],['sec','学生市场年利润'],['stRent','学生月租 £',50],['stMonths','出租月数',1],['stVoid','空置月数',1]],
+      oChartAria:'公司路线与个人路线累计差额折线图',oChartAxis:'出售年份',oLnDiv:'分红',oLnLoan:'股东贷款',
+      kicker:'Deansgate 三层联排 · 2026-12 至 2027-08',h1:'长租、Airbnb，还是先空着？',
+      intro:'学生合约11月底结束。这里把三种做法放在同一张表上比：9个月内到手多少钱，Airbnb要做到什么水平才划算。拖动左边的滑块，右边实时变化。',
+      window:'预测范围：只算 2026年12月 至 2027年8月，共9个月。9月起的情况不在预测内。',
+      gMarket:'Airbnb 市场水平',cons:'保守',base:'基准',opt:'乐观',caseHint:'保守 48% / £170 · 基准 58% / £205 · 乐观 68% / £240',
+      lOcc:'年均入住率',hOcc:'独立统计 Manchester 约54–58%；运营商宣传70%（两居室）。',
+      lAdr:'每晚房价',hAdr:'整栋可睡约8人。请用 Airbnb 同区同规模房源价格校正。',lMgmt:'Airbnb 管理费（自营填0）',
+      gA:'长租（A）',lRent:'月租',hRent:'目标区间 £1,450–1,500',lVoid:'找到租客前空置',
+      gTax:'税与议会税',taxBasic:'基本税率',taxHigh:'高税率',
+      ctTitle:'Airbnb 期间议会税',ct2:'议会税 ×2（二套房溢价，保守）',ct1:'议会税 ×1（无溢价）',ct0:'改按营业税率，减免后£0（需VOA认定140/70天）',
+      listed:'空置期正在挂牌出租/出售（可豁免空置溢价，最长12个月）',more:'更多假设（费用、贷款）',reset:'恢复默认',
+      hChart:'累计税后现金，逐月',leadChart:'12月至次年8月。Airbnb 前两个月要付布置费、还在爬坡，通常先落后；看它什么时候追上。',
+      hDetail:'9个月明细',leadDetail:'金额单位 £，负数是支出。',
+      hBE:'Airbnb 要做到多少，才追上长租？',leadBE:'税前比较，已计入冬季淡季和新房源爬坡。',
+      hHeat:'入住率 × 房价：B 比 A 多赚多少',leadHeat:'税前，9个月。绿色是 Airbnb 更好，红色是长租更好。点任意格子，把滑块设到那个组合。',
+      lgB:'B 更好',lgA:'A 更好',lgCur:'粗框 = 当前设置（取最近的格子）',
+      hQual:'数字之外的差别',hRisk:'下单前要确认的事',hSrc:'来源（2026-11-16 查询）',
+      foot:'这是估算工具，不是税务或法律意见。税务、抵押同意、规划请向会计、贷款方和议会确认。',
+      qualH:['维度','A 本地长租','B Airbnb','C 空置'],
+      qual:[
+        ['空房看房、出售','难。新租约头12个月内不能以卖房为由收回，通知期至少4个月；只能带租约卖给投资客。','易。客人没有租约，随时能清空，也能精装看房。','最容易，但没有收入。'],
+        ['9月回学生市场','靠租客自愿通知。学生专用的第4A条对普通租客无效。','订单自己控制，8月底停订即可。','自动。'],
+        ['合规与审批','常规长租合规。','用途变更由议会个案判断；要贷款方书面同意和专项保险；英格兰短租登记预计2027年3月启动。','无。'],
+        ['工作量','低。','高：换客、保洁、评价、定价。','无。'],
+        ['现金流','稳定，但头几个月为零。','波动大，冬季淡季。','持续净流出。']],
+      risks:[
+        ['贷款方与保险','多数住宅或出租按揭禁止短租，需书面同意或换专项产品，利率可能上浮。普通房东险通常不保短租。'],
+        ['议会税还是营业税','无人常住的有家具房产在 Manchester 加收100%溢价。全年可订≥140晚且实租≥70晚时，可能按营业税率，由VOA评定。'],
+        ['数据口径','运营商宣传（70%、£219，两居室）明显高于独立统计（54–58%、£116–141）。请用同区同户型的已订日期校正。'],
+        ['税务','个人持有的房贷利息只给20%抵免；2027年4月起财产收入税率上调2个百分点。资本利得税、出售费用、增值税未计入，请会计核算。'],
+        ['回学生市场','9月起的学生租约要在签约前书面告知第4A条；HMO牌照和安全证书8月前就位。'],
+        ['估算项','季节系数、爬坡系数、管理费、布置费、水电都是估算，不是来源数据。用真实账单和报价替换。']],
+      names:{A:'A 本地长租',B:'B Airbnb',C:'C 空置'},short:{A:'A 长租',B:'B Airbnb',C:'C 空置'},
+      months:['12月','1月','2月','3月','4月','5月','6月','7月','8月'],
+      best:'税后最高',
+      vA:function(x){return '按当前假设，A 长租税后最多：比 Airbnb 多 '+x+'。'},
+      vB:function(x){return '按当前假设，B Airbnb 税后最多：比长租多 '+x+'。'},
+      vC:'按当前假设，空置的税后损失反而最小，长租和 Airbnb 都不划算。',
+      vSub:function(a,b,c){return '税后9个月：A '+a+'，B '+b+'，C '+c+'。'},
+      vNeed:function(o,now){return ' Airbnb 要追平长租，年均入住率需约 '+o+'（当前 '+now+'%）。'},
+      over100:'超过100%',vOK:' 当前 Airbnb 已高于长租的门槛。',
+      descA:function(n){return '前'+n+'个月空置找租客，之后收租'},descB:'12月布置上线，9月前停订',descC:'不租不用，保持挂牌',
+      tileSub:function(m){return '税后，9个月 · 约 '+m+'/月'},vsA:'较 A：',
+      rows:['收入','经营成本','一次性投入','房贷利息','税前净现金流','所得税（含利息抵免）','税后净现金流'],
+      dh:['A 长租','B Airbnb','C 空置'],
+      beNoOcc:['追不平','在当前每晚房价下，入住率拉满也追不平长租。'],
+      beOcc:function(o,a){return '年均入住率（当前 '+o+'%，每晚 £'+a+'）'},
+      beNoAdr:['追不平','在当前入住率下，房价再高也追不平。'],
+      beAdr:function(a,o){return '每晚房价（当前 £'+a+'，入住率 '+o+'%）'},
+      voidFmt:function(v){return v+' 个月'},
+      taxHint:function(h){return h?'边际税率 40%，2027年4月起 42%。夫妻各自为高税率纳税人。':'边际税率 20%，2027年4月起 22%。'},
+      heatCorner:'入住率 ↓ / 每晚 →',
+      heatAria:function(o,a,d){return '入住率'+o+'%，每晚£'+a+'，B比A'+d},
+      chartAria:'累计税后现金折线图'
+    },
+    en:{
+
+      tabLet:'Let options: long let / Airbnb / empty',tabOwn:'Ownership: personal vs company',
+      stripSets:{let:['A Long let · after tax','B Airbnb · after tax','C Empty · after tax'],own:['Up-front cash','Company route, per year','Sell-out gap (company − personal)']},
+      oG1:'Property (placeholders, please replace)',oLV:'Current market value',oHV:'Placeholder: £550,000. Use a valuation or nearby sold prices.',oLCb:'Original cost (incl. SDLT, legal, improvements)',oHCb:'Placeholder: £350,000. Drives how much CGT is due now.',oLG:'Annual price growth',oLN:'Years held before selling',oHN:'0 = move into the company and sell straight away.',
+      oG2:'Couple’s personal tax',oLRate:'Marginal income tax rate',oPlus2:'Include the +2 points on property income from April 2027',
+      oG3:'Company route',oModeDiv:'Take dividends',oModeLoan:'Repay shareholder loan',oHMode:'Dividends bear 39.35% personal tax. Loan repayments are not income, but HMRC watches these structures, so they need specialist design.',
+      oSdltRel:'Claim the rental-business relief and avoid the flat 17% SDLT rate (value over £500k)',oS162:'Claim s162 incorporation relief and defer CGT (letting must look like a real business, about 20 hours a week)',
+      oLComp:'Extra company running costs per year (accounts, tax returns, filings)',oHComp:'Accountancy typically £1,000–3,000 a year.',oLPrem:'Company mortgage rate above personal',oHPrem:'About 0.3–0.5 points higher in the market.',
+      oHUp:'One-off costs up front',oLeadUp:'Moving the house into your own company is treated as selling it to the company at market value. The tax is due whether or not any cash changes hands.',
+      oHAnn:'While you hold it: yearly take-home',oHChart:'Company route minus personal route, cumulative',oLeadChart:'The horizontal axis is the year you sell. Above zero means the company route is ahead. Includes up-front costs, yearly running costs and the tax on sale.',
+      oHNotes:'Rules that drive the result',oHSrc:'Sources (looked up 16 Nov 2026)',
+      oUpRows:['CGT paid now (due on a sale anyway; the difference is timing)','SDLT on market value (incl. 5% surcharge)','Solicitor / transfer fees','Valuation','Accountant’s tax computations','Remortgage fees','Company formation + Land Registry'],
+      oUpTotal:'Total cash up front',oUpDead:'Of which permanent loss (excl. CGT)',
+      oAnnRows:['Annual operating profit (before interest)','Mortgage interest','Extra company running costs','Tax on profit (income tax / corporation tax)','After-tax profit left in company','Personal tax on dividends or drawings','Yearly take-home'],
+      oAnnHead:['Personal','Company + dividends','Company + loan repayment'],
+      oLeadAnn:function(op){return 'On the usual student-let year (£'+Number(O.stRent).toLocaleString('en-GB')+' a month × '+O.stMonths+' months), operating profit is about '+gbp(op)+'. The company route pays extra running costs and a higher mortgage rate.'},
+      oTileUp:'Up-front cash',oTileUpSub:function(cgt,dead){return 'Of which CGT '+gbp(cgt)+', permanent loss '+gbp(dead)},
+      oTileAnn:'Yearly take-home: company − personal',oTileAnnSub:function(d,l){return 'Dividends '+gbp(d,true)+'; loan repayment '+gbp(l,true)},
+      oTileN:function(n){return n===0?'Gap if sold immediately':'Gap if sold after '+n+' years'},oTileNSub:function(be){return be===null?'Not recovered within 40 years':'Company route catches up in year '+be},
+      oHeadNeg:function(n,x){return 'On current assumptions, moving it into a company is worse: if you sell after '+n+(n===1?' year':' years')+', you end up '+x+' behind holding it personally.'},
+      oHeadPos:function(n,x){return 'On current assumptions, moving it into a company is better: if you sell after '+n+(n===1?' year':' years')+', you end up '+x+' ahead of holding it personally.'},
+      oSub:function(u,dead,be,sellSoon){return 'You pay '+u+' up front, of which '+dead+' is permanently lost.'+(be===null?' The up-front cost is not recovered within 40 years.':' You would need to hold for about '+be+' years to break even.')+(sellSoon?' You plan to sell soon, so that cost buys you almost nothing.':'')},
+      oNotes:[
+        'The house is not currently let, so it is hard to show it is a “business”, and s162 relief is probably unavailable. HMRC generally accepts about 20 hours a week of activity, which is a high bar.',
+        'A transfer to your own company is taxed at market value. Both CGT and SDLT use market value, not the £100,000 left on the mortgage.',
+        'Companies get no £3,000 CGT exemption. On a later sale the company pays corporation tax at 19%–25%, and taking the money out costs personal tax again.',
+        'A company helps in two ways: mortgage interest is fully deductible, and corporation tax is below 45%. But dividends cost 39.35% on the way out, so the total is often no lower than holding personally. It only clearly wins if profit stays in the company.',
+        'The existing mortgage must be refinanced into the company. Rates are usually 0.3–0.5 points higher, and directors may need to give personal guarantees.',
+        'If you might sell within nine months, a company only adds cost. It is worth discussing only for a long hold with profit left in the company.'],
+      oSrc:[
+        ['https://www.taxinsider.co.uk/tax-articles/restructuring-a-legacy-portfolio-incorporation','Tax Insider: incorporation triggers CGT and SDLT'],
+        ['https://www.ukpropertyaccountants.co.uk/can-you-gift-a-property-to-a-limited-company/','UK Property Accountants: connected company, market value'],
+        ['https://www.taxationweb.co.uk/tax-articles/business-tax/incorporation-relief.html','Taxation Web: s162 and the Ramsay case'],
+        ['https://bkl.co.uk/?p=77414','BKL: CGT and SDLT on incorporation'],
+        ['https://www.accountingweb.co.uk/node/227811','AccountingWeb: 2026/27 corporation and dividend rates'],
+        ['https://uktax.tools/capital-gains-tax-rates/','uktax.tools: 2026/27 CGT rates'],
+        ['https://www.kaeltripton.com/property/ltd-company-buy-to-let-uk-2026/','Kaeltripton: mortgage premium, savings only if profit retained'],
+        ['https://www.augustapp.com/partnerships/is-forming-a-limited-company-right-for-uk-landlords','August: company accountancy about £1,000–3,000 a year'],
+        ['https://www.property118.com/incorporation-buy-to-let-mortgages-2025/','Property118: mortgage must be refinanced into the company'],
+        ['https://taxpolicy.org.uk/2023/09/22/amazing/','Tax Policy Associates: the shareholder-loan debate']],
+      oAdv:[['sec','Costs'],['legal','Solicitor / transfer fees £',100],['val','Valuation £',50],['acct','Accountant’s tax computations £',100],['remort','Remortgage fees £',100],['form','Formation + Land Registry £',50],['sec','Tax rates'],['cgt','CGT rate %',1],['div','Dividend tax rate %',0.5],['aea','CGT exemption per owner £',500],['owners','Number of owners',1],['sec','Student-let annual profit'],['stRent','Student rent £/month',50],['stMonths','Months let',1],['stVoid','Months empty',1]],
+      oChartAria:'Line chart of cumulative company-route versus personal-route gap',oChartAxis:'Year of sale',oLnDiv:'Dividends',oLnLoan:'Shareholder loan',
+      kicker:'Deansgate 3-storey townhouse · Dec 2026 to Aug 2027',h1:'Long let, Airbnb, or leave it empty?',
+      intro:'The student contract ends in late November. This page puts the three options side by side: what you keep over 9 months, and what Airbnb has to achieve to be worth it. Move a slider on the left and the numbers on the right update.',
+      window:'Forecast window: December 2026 to August 2027 only, 9 months. Nothing from September onward is forecast.',
+      gMarket:'Airbnb market level',cons:'Low',base:'Base',opt:'High',caseHint:'Low 48% / £170 · Base 58% / £205 · High 68% / £240',
+      lOcc:'Average occupancy',hOcc:'Independent data puts Manchester at about 54–58%. Operators advertise 70% (2-bed).',
+      lAdr:'Nightly rate',hAdr:'Sleeps about 8 as a whole house. Check against Airbnb listings of similar size nearby.',lMgmt:'Airbnb management fee (0 if self-run)',
+      gA:'Long let (A)',lRent:'Monthly rent',hRent:'Target range £1,450–1,500',lVoid:'Empty before a tenant is found',
+      gTax:'Tax and council tax',taxBasic:'Basic rate',taxHigh:'Higher rate',
+      ctTitle:'Council tax during Airbnb',ct2:'Council tax ×2 (second-home premium, cautious)',ct1:'Council tax ×1 (no premium)',ct0:'Business rates, £0 after relief (VOA must accept the 140/70-night test)',
+      listed:'Property is being marketed to let or sell while empty (premium exempt for up to 12 months)',more:'More assumptions (costs, mortgage)',reset:'Reset to defaults',
+      hChart:'Cumulative cash after tax, by month',leadChart:'December to August. Airbnb pays set-up costs and ramps up slowly in the first two months, so it usually starts behind. Watch when it catches up.',
+      hDetail:'9-month breakdown',leadDetail:'Amounts in £. Negative figures are outgoings.',
+      hBE:'What does Airbnb need to match the long let?',leadBE:'Before tax. Includes the winter low season and the new-listing ramp-up.',
+      hHeat:'Occupancy × nightly rate: how much more B earns than A',leadHeat:'Before tax, 9 months. Green means Airbnb is better, red means the long let is. Tap a cell to set the sliders to it.',
+      lgB:'B better',lgA:'A better',lgCur:'Outlined = current setting (nearest cell)',
+      hQual:'What the numbers leave out',hRisk:'Check before you commit',hSrc:'Sources (looked up 16 Nov 2026)',
+      foot:'This is an estimating tool, not tax or legal advice. Confirm tax, mortgage consent and planning with your accountant, lender and the council.',
+      qualH:['','A Long let','B Airbnb','C Empty'],
+      qual:[
+        ['Viewings and sale','Hard. A new tenancy cannot be ended to sell in its first 12 months, and notice is at least 4 months. Realistically you sell with the tenant in place, to an investor.','Easy. Guests have no tenancy, so it can be cleared at any time and staged for viewings.','Easiest, but no income.'],
+        ['Back to students in September','Depends on the tenant choosing to leave. Ground 4A only works for student HMOs.','You control the calendar. Stop taking bookings at the end of August.','Automatic.'],
+        ['Compliance and consents','Ordinary lettings compliance.','Change of use is judged case by case by the council. Needs written lender consent and specialist insurance. England short-let register expected March 2027.','None.'],
+        ['Workload','Low.','High: guest turnover, cleaning, reviews, pricing.','None.'],
+        ['Cash flow','Steady, but zero for the first months.','Volatile, with a winter low season.','Steady outflow.']],
+      risks:[
+        ['Lender and insurance','Most residential and buy-to-let mortgages ban short lets. You need written consent or a different product, and the rate may rise. Standard landlord insurance usually excludes short lets.'],
+        ['Council tax or business rates','Empty furnished homes with no resident pay a 100% premium in Manchester. If it is available 140+ nights and let 70+ nights a year it may move to business rates, which the VOA decides.'],
+        ['Data sources disagree','Operator claims (70%, £219, 2-bed) are far above independent data (54–58%, £116–141). Check booked dates on comparable listings nearby.'],
+        ['Tax','Personal mortgage interest only gets a 20% credit. Property income tax rates rise by 2 points from April 2027. Capital gains tax, sale costs and VAT are not included. Ask your accountant.'],
+        ['Return to students','Ground 4A needs written notice before the student tenancy starts. HMO licence and safety certificates must be in place before August.'],
+        ['Estimates','Seasonal and ramp-up factors, management fee, set-up cost and utilities are estimates, not sourced data. Replace them with real bills and quotes.']],
+      names:{A:'A Long-term let',B:'B Airbnb',C:'C Leave empty'},short:{A:'A Long let',B:'B Airbnb',C:'C Empty'},
+      months:['Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'],
+      best:'Best after tax',
+      vA:function(x){return 'On current assumptions, A (long let) leaves you best off after tax: '+x+' more than Airbnb.'},
+      vB:function(x){return 'On current assumptions, B (Airbnb) leaves you best off after tax: '+x+' more than the long let.'},
+      vC:'On current assumptions, leaving it empty loses least after tax. Neither the long let nor Airbnb pays off.',
+      vSub:function(a,b,c){return 'After tax over 9 months: A '+a+', B '+b+', C '+c+'.'},
+      vNeed:function(o,now){return ' To match the long let, Airbnb needs about '+o+' average occupancy (now '+now+'%).'},
+      over100:'over 100%',vOK:' Airbnb already clears the long-let bar.',
+      descA:function(n){return n===0?'Let from December':(n===1?'Empty for 1 month while a tenant is found, then rent':'Empty for '+n+' months while a tenant is found, then rent')},descB:'Set up in December, stop bookings before September',descC:'No let, no use, stays on the market',
+      tileSub:function(m){return 'After tax, 9 months · about '+m+'/month'},vsA:'vs A: ',
+      rows:['Revenue','Operating costs','One-off costs','Mortgage interest','Net cash before tax','Income tax (after interest credit)','Net cash after tax'],
+      dh:['A Long let','B Airbnb','C Empty'],
+      beNoOcc:['Not reachable','At this nightly rate, even full occupancy cannot match the long let.'],
+      beOcc:function(o,a){return 'Average occupancy (now '+o+'%, £'+a+' a night)'},
+      beNoAdr:['Not reachable','At this occupancy, no nightly rate matches the long let.'],
+      beAdr:function(a,o){return 'Nightly rate (now £'+a+', occupancy '+o+'%)'},
+      voidFmt:function(v){return v+(v===1?' month':' months')},
+      taxHint:function(h){return h?'Marginal rate 40%, 42% from April 2027. Both owners are higher-rate taxpayers.':'Marginal rate 20%, 22% from April 2027.'},
+      heatCorner:'Occupancy ↓ / per night →',
+      heatAria:function(o,a,d){return 'Occupancy '+o+'%, £'+a+' a night, B versus A '+d},
+      chartAria:'Line chart of cumulative cash after tax'
+    }
+  };
+  var LANG='zh';
+  try{var sv=localStorage.getItem('dg-lang'); if(sv==='en'||sv==='zh')LANG=sv;}catch(e){}
+  var S=JSON.parse(JSON.stringify(DEFAULTS));
+  var $=function(id){return document.getElementById(id)};
+  var T=function(){return D[LANG]};
+  var gbp=function(n,sign){var r=Math.round(n);var s=Math.abs(r).toLocaleString('en-GB');var pre=r<0?'−':(sign&&r>0?'+':'');return pre+'£'+s};
+  var k=function(n){var a=Math.abs(n)/1000;var s=a.toFixed(1);return (n<0?'−':(n>0?'+':''))+s+'k'};
+
+  function params(o){
+    var p=Object.assign({},S,o||{});
+    p.occ=p.occ/100; p.rate=p.mortRate/100; p.upl=p.bUplift/100; p.pf=p.plat/100; p.bm=p.bMgmt/100;
+    p.ml=p.mgmtLong/100; p.mt=p.maintLong/100; p.sd=p.setupDed/100;
+    p.tPre=p.taxMode==='high'?0.40:0.20; p.tPost=p.taxMode==='high'?0.42:0.22; p.tCr=0.20;
+    return p;
+  }
+  function run(o){
+    var p=params(o), A=[],B=[],C=[];
+    var intA=p.mortBal*p.rate/12, intB=p.mortBal*(p.rate+p.upl)/12, ctM=p.ctAnnual/12;
+    var voidMult=p.listed?1:2, bMult=p.ctMode;
+    for(var i=1;i<=9;i++){
+      var tr=i>=5?p.tPost:p.tPre, d=DAYS[i-1];
+      var rent=i>p.aVoid?1:0;
+      var inc=p.aRent*rent, mg=-p.ml*inc, mt=-p.mt*inc, ins=-p.insLong, ct=-ctM*voidMult*(1-rent), ut=-p.voidUtil*(1-rent);
+      var find=-(i===p.aVoid+1?p.aFind:0), chg=-(i===9?p.aChange:0);
+      var one=find+chg, op=inc+mg+mt+ins+ct+ut+one, it=-intA, pre=op+it, tax=-op*tr+(-it)*p.tCr;
+      A.push({rev:inc,opex:op-inc-one,one:one,int:it,pre:pre,tax:tax,after:pre+tax});
+      var occ=Math.min(0.95,p.occ*SEAS[i-1]*RAMP[i-1]), nights=d*occ, turn=nights/p.avgStay, rev=nights*p.adr;
+      var cost=-(p.pf*rev)-(p.bm*rev)-turn*(p.clean+p.linen+p.consum)-(p.energy+p.water)-p.wifi-p.bMaint-p.bIns-ctM*bMult;
+      var su=-(i===1?p.setup:0), opB=rev+cost+su, itB=-intB, preB=opB+itB;
+      var taxable=opB-su*(1-p.sd), taxB=-taxable*tr+(-itB)*p.tCr;
+      B.push({rev:rev,opex:cost,one:su,int:itB,pre:preB,tax:taxB,after:preB+taxB});
+      var opC=-p.insLong-ctM*voidMult-p.voidUtil, itC=-intA, preC=opC+itC, taxC=-opC*tr+(-itC)*p.tCr;
+      C.push({rev:0,opex:opC,one:0,int:itC,pre:preC,tax:taxC,after:preC+taxC});
+    }
+    return {A:A,B:B,C:C};
+  }
+  function tot(arr,f){return arr.reduce(function(s,m){return s+m[f]},0)}
+  function cum(arr){var s=0,o=[0];arr.forEach(function(m){s+=m.after;o.push(s)});return o}
+  function bisect(f,lo,hi){
+    if(f(hi)<0) return null; if(f(lo)>=0) return lo;
+    for(var i=0;i<60;i++){var m=(lo+hi)/2; if(f(m)>=0) hi=m; else lo=m;} return hi;
+  }
+
+  function render(){
+    var t=T(), R=run(), TT={};
+    ['A','B','C'].forEach(function(s){TT[s]={rev:tot(R[s],'rev'),opex:tot(R[s],'opex'),one:tot(R[s],'one'),int:tot(R[s],'int'),pre:tot(R[s],'pre'),tax:tot(R[s],'tax'),after:tot(R[s],'after')}});
+    if(TAB==='let')[['sA','A'],['sB','B'],['sC','C']].forEach(function(x){var e=$(x[0]);e.textContent=gbp(TT[x[1]].after);e.className='num '+(TT[x[1]].after<0?'neg':'')});
+    var order=['A','B','C'].sort(function(x,y){return TT[y].after-TT[x].after}), best=order[0];
+    var head;
+    if(best==='A') head=t.vA(gbp(TT.A.after-TT.B.after));
+    else if(best==='B') head=t.vB(gbp(TT.B.after-TT.A.after));
+    else head=t.vC;
+    var bePre=function(o){var r=run(o);return tot(r.B,'pre')-tot(r.A,'pre')};
+    var beO=bisect(function(x){return bePre({occ:x})},0,100);
+    var beA=bisect(function(x){return bePre({adr:x})},0,3000);
+    var sub=t.vSub(gbp(TT.A.after),gbp(TT.B.after),gbp(TT.C.after));
+    if(TT.A.pre>TT.B.pre) sub+=t.vNeed(beO===null?t.over100:Math.round(beO)+'%',S.occ); else sub+=t.vOK;
+    $('vHead').textContent=head; $('vSub').textContent=sub;
+    var cls={A:'a',B:'b',C:'c'}, desc={A:t.descA(S.aVoid),B:t.descB,C:t.descC};
+    var h='';
+    ['A','B','C'].forEach(function(s){
+      var d=TT[s].after-TT.A.after;
+      h+='<article class="tile '+cls[s]+'"><h3>'+t.names[s]+(s===best?'<span class="pill">'+t.best+'</span>':'')+'</h3>'+
+        '<div class="big num '+(TT[s].after<0?'neg':'')+'">'+gbp(TT[s].after)+'</div>'+
+        '<div class="sub">'+t.tileSub(gbp(TT[s].after/9))+'<br>'+desc[s]+
+        (s==='A'?'':'<br>'+t.vsA+'<span class="num '+(d<0?'neg':'pos')+'">'+gbp(d,true)+'</span>')+'</div></article>';
+    });
+    $('tiles').innerHTML=h;
+    renderChart(R);
+    var keys=['rev','opex','one','int','pre','tax','after'];
+    var tb='<thead><tr><th></th>'+t.dh.map(function(x){return '<th>'+x+'</th>'}).join('')+'</tr></thead><tbody>';
+    keys.forEach(function(key,i){var tt=(key==='pre'||key==='after');tb+='<tr'+(tt?' class="tot"':'')+'><td>'+t.rows[i]+'</td>'+['A','B','C'].map(function(s){var v=TT[s][key];return '<td class="num '+(v<0&&tt?'neg':'')+'">'+gbp(v)+'</td>'}).join('')+'</tr>'});
+    $('detail').innerHTML=tb+'</tbody>';
+    if(beO===null){$('beOcc').textContent=t.beNoOcc[0];$('beOccS').textContent=t.beNoOcc[1]}
+    else{$('beOcc').textContent=beO.toFixed(1)+'%';$('beOccS').textContent=t.beOcc(S.occ,S.adr)}
+    if(beA===null){$('beAdr').textContent=t.beNoAdr[0];$('beAdrS').textContent=t.beNoAdr[1]}
+    else{$('beAdr').textContent='£'+Math.round(beA);$('beAdrS').textContent=t.beAdr(S.adr,S.occ)}
+    renderHeat();
+    renderOwn();
+  }
+
+  function renderChart(R){
+    var t=T(), W=640,H=290,L=58,Rr=96,Tp=14,Bt=30, pw=W-L-Rr, ph=H-Tp-Bt;
+    var ser=[['A',cum(R.A),'var(--a)',t.short.A],['B',cum(R.B),'var(--b)',t.short.B],['C',cum(R.C),'var(--c)',t.short.C]];
+    var lo=0,hi=0; ser.forEach(function(s){s[1].forEach(function(v){lo=Math.min(lo,v);hi=Math.max(hi,v)})});
+    var span=Math.max(hi-lo,1000), step=Math.pow(10,Math.floor(Math.log10(span/4)));
+    [1,2,2.5,5,10].some(function(m){if(span/(step*m)<=5){step=step*m;return true}});
+    lo=Math.floor(lo/step)*step; hi=Math.ceil(hi/step)*step; if(hi===lo)hi=lo+step;
+    var X=function(i){return L+pw*i/9}, Y=function(v){return Tp+ph*(1-(v-lo)/(hi-lo))};
+    var g='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+t.chartAria+'">';
+    for(var v=lo;v<=hi+1e-6;v+=step){g+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)" stroke-width="'+(Math.abs(v)<1e-6?1.6:1)+'"/><text x="'+(L-8)+'" y="'+(Y(v)+4)+'" text-anchor="end">'+(v<0?'−':'')+'£'+(Math.abs(v)>=1000?(Math.abs(v)/1000)+'k':Math.abs(v))+'</text>'}
+    t.months.forEach(function(m,i){g+='<text x="'+X(i+1)+'" y="'+(H-10)+'" text-anchor="middle">'+m+'</text>'});
+    var labels=[];
+    ser.forEach(function(s){
+      var pts=s[1].map(function(v,i){return X(i)+','+Y(v)}).join(' ');
+      g+='<polyline points="'+pts+'" fill="none" stroke="'+s[2]+'" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>';
+      var last=s[1][9]; g+='<circle cx="'+X(9)+'" cy="'+Y(last)+'" r="4.5" fill="'+s[2]+'"/>';
+      labels.push({y:Y(last),c:s[2],t:s[3],v:last});
+    });
+    labels.sort(function(a,b){return a.y-b.y});
+    for(var i=1;i<labels.length;i++){if(labels[i].y-labels[i-1].y<15)labels[i].y=labels[i-1].y+15}
+    labels.forEach(function(l){g+='<text class="lab" x="'+(W-Rr+10)+'" y="'+(l.y+4)+'" style="fill:'+l.c+'">'+l.t+' '+k(l.v)+'</text>'});
+    $('chart').innerHTML=g+'</svg>';
+  }
+
+  var HO=[40,45,50,55,60,65,70,75], HA=[140,160,180,200,220,240,260];
+  function nearest(arr,v){return arr.reduce(function(b,x){return Math.abs(x-v)<Math.abs(b-v)?x:b},arr[0])}
+  function renderHeat(){
+    var t=T(), curO=nearest(HO,S.occ), curA=nearest(HA,S.adr);
+    var h='<thead><tr><th>'+t.heatCorner+'</th>'+HA.map(function(a){return '<th>£'+a+'</th>'}).join('')+'</tr></thead><tbody>';
+    HO.forEach(function(o){
+      h+='<tr><th>'+o+'%</th>';
+      HA.forEach(function(a){
+        var r=run({occ:o,adr:a}), d=tot(r.B,'pre')-tot(r.A,'pre'), q=Math.min(1,Math.abs(d)/7000)*62+6;
+        var bg='color-mix(in srgb,'+(d>=0?'var(--good)':'var(--bad)')+' '+q.toFixed(0)+'%,transparent)';
+        h+='<td style="background:'+bg+'"><button type="button" class="'+(o===curO&&a===curA?'cur':'')+'" data-o="'+o+'" data-a="'+a+'" aria-label="'+t.heatAria(o,a,gbp(d,true))+'">'+k(d)+'</button></td>';
+      });
+      h+='</tr>';
+    });
+    $('heat').innerHTML=h+'</tbody>';
+  }
+
+
+  /* ================= Ownership tab ================= */
+  var ODEF={V:550000,Cb:350000,G:2,N:10,rate:45,plus2:true,mode:'div',sdltRel:true,s162:false,comp:2000,prem:0.4,
+    legal:2500,val:800,acct:1500,remort:1500,form:350,cgt:24,div:39.35,aea:3000,owners:2,stRent:2050,stMonths:9,stVoid:3};
+  var O=JSON.parse(JSON.stringify(ODEF)); var TAB='let';
+  function ctax(p){ if(p<=0)return 0; if(p<=50000)return p*0.19; if(p>=250000)return p*0.25; return p*0.25-(3/200)*(250000-p); }
+  function sdltCo(v,rel){
+    if(v>500000&&!rel) return v*0.17;
+    var bands=[[125000,0.05],[250000,0.07],[925000,0.10],[1500000,0.15],[Infinity,0.17]], prev=0, t=0;
+    for(var i=0;i<bands.length;i++){ if(v>prev){ t+=(Math.min(v,bands[i][0])-prev)*bands[i][1]; } prev=bands[i][0]; }
+    return t;
+  }
+  function ownCalc(){
+    var M=S.mortBal, rate=S.mortRate/100, ctM=S.ctAnnual/12, vm=S.listed?1:2;
+    var op=O.stRent*O.stMonths*(1-S.mgmtLong/100-S.maintLong/100)-S.insLong*12-ctM*vm*O.stVoid-S.voidUtil*O.stVoid;
+    var tp=(O.rate+(O.plus2?2:0))/100, cg=O.cgt/100, dv=O.div/100;
+    var intP=M*rate, intC=M*(rate+O.prem/100);
+    var annP=(op-intP)-(op*tp-0.2*intP);
+    var profC=op-intC-O.comp, ctC=ctax(profC), retC=profC-ctC;
+    var E=O.V-M;
+    var cgtNow=O.s162?0:Math.max(0,O.V-O.Cb-O.owners*O.aea)*cg;
+    var sdlt=sdltCo(O.V,O.sdltRel);
+    var fees={legal:O.legal,val:O.val,acct:O.acct,remort:O.remort,form:O.form};
+    var feeSum=O.legal+O.val+O.acct+O.remort+O.form;
+    var dead=sdlt+feeSum, U=cgtNow+dead;
+    function series(mode){
+      var L0=mode==='loan'?(O.s162?Math.max(0,Math.min(E,O.Cb-M)):E):0;
+      var shareBase=Math.max(0,E-L0-(O.s162?(O.V-O.Cb):0));
+      var out=[], Lbal=L0, ext=0;
+      for(var n=0;n<=40;n++){
+        if(n>0){ var repay=Math.min(retC,Lbal); Lbal-=repay; ext+=repay+(retC-repay)*(1-dv); }
+        var SN=O.V*Math.pow(1+O.G/100,n);
+        var netP=n*annP+(SN-M)-Math.max(0,SN-O.Cb-O.owners*O.aea)*cg;
+        var gain=n>0?Math.max(0,SN-O.V):0;
+        var ctGain=ctax(profC+gain)-ctax(profC);
+        var proceeds=SN-M-ctGain;
+        var rep=Math.min(proceeds,Lbal), rest=proceeds-rep;
+        var liq=Math.max(0,rest-shareBase)*cg;
+        var netC=-U+ext+rep+rest-liq;
+        out.push(netC-netP);
+      }
+      return out;
+    }
+    var sd=series('div'), sl=series('loan');
+    var be=function(a){for(var n=1;n<=40;n++){if(a[n]>=0)return n}return null};
+    return {op:op,annP:annP,intP:intP,intC:intC,profC:profC,ctC:ctC,retC:retC,dv:dv,cgtNow:cgtNow,sdlt:sdlt,fees:fees,feeSum:feeSum,dead:dead,U:U,sd:sd,sl:sl,beD:be(sd),beL:be(sl),tp:tp};
+  }
+  function renderOwn(){
+    var t=T(), c=ownCalc(), sel=O.mode==='loan'?c.sl:c.sd, beSel=O.mode==='loan'?c.beL:c.beD, gapN=sel[O.N];
+    var annDiv=c.retC*(1-c.dv)-c.annP, annLoan=c.retC-c.annP;
+    // headline
+    $('oHead').textContent=gapN<0?t.oHeadNeg(O.N,gbp(-gapN)):t.oHeadPos(O.N,gbp(gapN));
+    $('oSub').textContent=t.oSub(gbp(c.U),gbp(c.dead),beSel,O.N<=1);
+    if(TAB==='own'){ $('sA').textContent=gbp(c.U); $('sA').className='num neg'; $('sB').textContent=gbp(O.mode==='loan'?annLoan:annDiv,true); $('sB').className='num '+((O.mode==='loan'?annLoan:annDiv)<0?'neg':'pos'); $('sC').textContent=gbp(gapN,true); $('sC').className='num '+(gapN<0?'neg':'pos'); }
+    // tiles
+    $('oTiles').innerHTML=
+      '<article class="tile c"><h3>'+t.oTileUp+'</h3><div class="big num neg">'+gbp(-c.U)+'</div><div class="sub">'+t.oTileUpSub(c.cgtNow,c.dead)+'</div></article>'+
+      '<article class="tile b"><h3>'+t.oTileAnn+'</h3><div class="big num '+((O.mode==='loan'?annLoan:annDiv)<0?'neg':'pos')+'">'+gbp(O.mode==='loan'?annLoan:annDiv,true)+'</div><div class="sub">'+t.oTileAnnSub(annDiv,annLoan)+'</div></article>'+
+      '<article class="tile a"><h3>'+t.oTileN(O.N)+'</h3><div class="big num '+(gapN<0?'neg':'pos')+'">'+gbp(gapN,true)+'</div><div class="sub">'+t.oTileNSub(beSel)+'</div></article>';
+    // upfront table
+    var vals=[c.cgtNow,c.sdlt,c.fees.legal,c.fees.val,c.fees.acct,c.fees.remort,c.fees.form];
+    var h='<tbody>'; vals.forEach(function(v,i){h+='<tr><td>'+t.oUpRows[i]+'</td><td class="num">'+gbp(v)+'</td></tr>'});
+    h+='<tr class="tot"><td>'+t.oUpTotal+'</td><td class="num">'+gbp(c.U)+'</td></tr><tr><td>'+t.oUpDead+'</td><td class="num neg">'+gbp(c.dead)+'</td></tr></tbody>';
+    $('oUp').innerHTML=h;
+    // annual table
+    var persTax=c.op*c.tp-0.2*c.intP, divTax=c.retC*c.dv;
+    var rows=[
+      [c.op,c.op,c.op],
+      [-c.intP,-c.intC,-c.intC],
+      [0,-O.comp,-O.comp],
+      [-persTax,-c.ctC,-c.ctC],
+      [null,c.retC,c.retC],
+      [null,-divTax,0],
+      [c.annP,c.retC-divTax,c.retC]];
+    var a='<thead><tr><th></th>'+t.oAnnHead.map(function(x){return '<th>'+x+'</th>'}).join('')+'</tr></thead><tbody>';
+    rows.forEach(function(r,i){var tot=i===6;a+='<tr'+(tot?' class="tot"':'')+'><td>'+t.oAnnRows[i]+'</td>'+r.map(function(v){return '<td class="num">'+(v===null?'–':gbp(v))+'</td>'}).join('')+'</tr>'});
+    $('oAnn').innerHTML=a+'</tbody>';
+    $('oLeadAnn').textContent=t.oLeadAnn(c.op);
+    // chart
+    var W=640,H=290,L=62,Rr=96,Tp=14,Bt=34,pw=W-L-Rr,ph=H-Tp-Bt, NM=20;
+    var ser=[[c.sd,'var(--b)',t.oLnDiv],[c.sl,'var(--a)',t.oLnLoan]];
+    var lo=0,hi=0; ser.forEach(function(s){for(var i=0;i<=NM;i++){lo=Math.min(lo,s[0][i]);hi=Math.max(hi,s[0][i])}});
+    var span=Math.max(hi-lo,10000), step=Math.pow(10,Math.floor(Math.log10(span/4)));
+    [1,2,2.5,5,10].some(function(m){if(span/(step*m)<=5){step=step*m;return true}});
+    lo=Math.floor(lo/step)*step; hi=Math.ceil(hi/step)*step; if(hi===lo)hi=lo+step;
+    var X=function(i){return L+pw*i/NM}, Y=function(v){return Tp+ph*(1-(v-lo)/(hi-lo))};
+    var g='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+t.oChartAria+'">';
+    for(var v=lo;v<=hi+1e-6;v+=step){g+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)" stroke-width="'+(Math.abs(v)<1e-6?1.6:1)+'"/><text x="'+(L-8)+'" y="'+(Y(v)+4)+'" text-anchor="end">'+(v<0?'−':'')+'£'+(Math.abs(v)>=1000?Math.round(Math.abs(v)/100)/10+'k':Math.abs(v))+'</text>'}
+    for(var i=0;i<=NM;i+=5){g+='<text x="'+X(i)+'" y="'+(H-12)+'" text-anchor="middle">'+i+'</text>'}
+    g+='<text x="'+(L+pw/2)+'" y="'+(H-0)+'" text-anchor="middle">'+t.oChartAxis+'</text>';
+    var labs=[];
+    ser.forEach(function(s){
+      var pts=[];for(var i=0;i<=NM;i++)pts.push(X(i)+','+Y(s[0][i]));
+      g+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+s[1]+'" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+X(O.N)+'" cy="'+Y(s[0][O.N])+'" r="4.5" fill="'+s[1]+'"/>';
+      labs.push({y:Y(s[0][NM]),c:s[1],t:s[2]+' '+k(s[0][NM])});
+    });
+    g+='<line x1="'+X(O.N)+'" x2="'+X(O.N)+'" y1="'+Tp+'" y2="'+(Tp+ph)+'" stroke="var(--muted)" stroke-dasharray="3 4"/>';
+    labs.sort(function(a,b){return a.y-b.y}); if(labs[1].y-labs[0].y<15)labs[1].y=labs[0].y+15;
+    labs.forEach(function(l){g+='<text class="lab" x="'+(W-Rr+10)+'" y="'+(l.y+4)+'" style="fill:'+l.c+'">'+l.t+'</text>'});
+    $('oChart').innerHTML=g+'</svg>';
+  }
+  var OFMT={oV:function(v){return gbp(v)},oCb:function(v){return gbp(v)},oG:function(v){return v+'%'},oN:function(v){var z=LANG==='zh';return z?v+' 年':v+(v===1?' year':' years')},oRate:function(v){return v+'%'},oComp:function(v){return gbp(v)+(LANG==='zh'?'/年':'/yr')},oPrem:function(v){return '+'+Number(v).toFixed(2)+'%'}};
+  var OKEY={oV:'V',oCb:'Cb',oG:'G',oN:'N',oRate:'rate',oComp:'comp',oPrem:'prem'};
+  function syncOwn(){
+    Object.keys(OKEY).forEach(function(id){$(id).value=O[OKEY[id]];$(id+'_o').textContent=OFMT[id](O[OKEY[id]])});
+    $('oPlus2').checked=O.plus2; $('oSdltRel').checked=O.sdltRel; $('oS162').checked=O.s162;
+    setPressed('#oModeSeg button','mode',O.mode);
+    T().oAdv.forEach(function(a){if(a[0]!=='sec'&&$('oadv_'+a[0]))$('oadv_'+a[0]).value=O[a[0]]});
+  }
+  function buildOwnAdv(){
+    var h='';
+    T().oAdv.forEach(function(a){
+      if(a[0]==='sec')h+='<div class="sec">'+a[1]+'</div>';
+      else h+='<label for="oadv_'+a[0]+'">'+a[1]+'</label><input type="number" inputmode="decimal" id="oadv_'+a[0]+'" step="'+a[2]+'">';
+    });
+    $('oAdv').innerHTML=h;
+    T().oAdv.forEach(function(a){if(a[0]==='sec')return;$('oadv_'+a[0]).addEventListener('input',function(e){var v=parseFloat(e.target.value);if(!isNaN(v)){O[a[0]]=v;renderOwn()}})});
+  }
+  function setTab(tab){
+    TAB=tab;
+    $('viewLet').hidden=tab!=='let'; $('viewOwn').hidden=tab!=='own';
+    setPressed('#tabs button','tab',tab);
+    var s=T().stripSets[tab]; $('stripLA').textContent=s[0];$('stripLB').textContent=s[1];$('stripLC').textContent=s[2];
+    if(tab==='own')renderOwn(); else render();
+    try{history.replaceState(null,'',tab==='own'?'#ownership':'#let')}catch(e){}
+  }
+
+  var fmt={occ:function(v){return v+'%'},adr:function(v){return '£'+v},bMgmt:function(v){return v+'%'},aRent:function(v){return '£'+Number(v).toLocaleString('en-GB')},aVoid:function(v){return T().voidFmt(v)}};
+  function setPressed(sel,attr,val){document.querySelectorAll(sel).forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset[attr]===val))})}
+  function sync(){
+    ['occ','adr','bMgmt','aRent','aVoid'].forEach(function(id){$(id).value=S[id];$(id+'_o').textContent=fmt[id](S[id])});
+    setPressed('#caseSeg button','case',S.caseSel); setPressed('#taxSeg button','tax',S.taxMode); setPressed('#lang button','lang',LANG);
+    $('taxHint').textContent=T().taxHint(S.taxMode==='high');
+    document.querySelectorAll('input[name=ct]').forEach(function(r){r.checked=Number(r.value)===S.ctMode});
+    $('listed').checked=S.listed;
+    ADV.forEach(function(a){if(a[0]!=='sec'&&$('adv_'+a[0]))$('adv_'+a[0]).value=S[a[0]]});
+  }
+  function buildAdv(){
+    var i=LANG==='zh'?0:1, h='';
+    ADV.forEach(function(a){
+      if(a[0]==='sec') h+='<div class="sec">'+a[1][i]+'</div>';
+      else h+='<label for="adv_'+a[0]+'">'+a[1][i]+'</label><input type="number" inputmode="decimal" id="adv_'+a[0]+'" step="'+a[2]+'">';
+    });
+    $('adv').innerHTML=h;
+    ADV.forEach(function(a){if(a[0]==='sec')return;$('adv_'+a[0]).addEventListener('input',function(e){var v=parseFloat(e.target.value);if(!isNaN(v)){S[a[0]]=v;render()}})});
+  }
+  function applyLang(){
+    var t=T(), i=LANG==='zh'?0:1;
+    document.documentElement.lang=LANG==='zh'?'zh-CN':'en-GB';
+    document.title=LANG==='zh'?'Deansgate 联排出租对比':'Deansgate Townhouse Let Comparison';
+    document.querySelectorAll('[data-i18n]').forEach(function(e){var v=t[e.getAttribute('data-i18n')];if(typeof v==='string')e.textContent=v});
+    var q='<thead><tr>'+t.qualH.map(function(x){return '<th>'+x+'</th>'}).join('')+'</tr></thead><tbody>'+
+      t.qual.map(function(r){return '<tr><td><b>'+r[0]+'</b></td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td></tr>'}).join('')+'</tbody>';
+    $('qual').innerHTML=q;
+    $('risks').innerHTML=t.risks.map(function(r){return '<div class="risk"><b>'+r[0]+'</b>'+r[1]+'</div>'}).join('');
+    $('src').innerHTML=SRC.map(function(s){return '<li><a href="'+s[0]+'" target="_blank" rel="noopener">'+s[1][i].replace(/&/g,'&amp;')+'</a></li>'}).join('');
+    $('oNotes').innerHTML=t.oNotes.map(function(n){return '<li>'+n+'</li>'}).join('');
+    $('oSrc').innerHTML=t.oSrc.map(function(s){return '<li><a href="'+s[0]+'" target="_blank" rel="noopener">'+s[1].replace(/&/g,'&amp;')+'</a></li>'}).join('');
+    buildAdv(); buildOwnAdv(); sync(); syncOwn(); setTab(TAB);
+  }
+  function setLang(l){LANG=l;try{localStorage.setItem('dg-lang',l)}catch(e){}applyLang()}
+  ['occ','adr','bMgmt','aRent','aVoid'].forEach(function(id){
+    $(id).addEventListener('input',function(e){S[id]=Number(e.target.value);if(id==='occ'||id==='adr')S.caseSel='custom';$(id+'_o').textContent=fmt[id](S[id]);setPressed('#caseSeg button','case',S.caseSel);render()});
+  });
+  document.querySelectorAll('#caseSeg button').forEach(function(b){b.addEventListener('click',function(){var c=CASES[b.dataset.case];S.caseSel=b.dataset.case;S.occ=c.occ;S.adr=c.adr;sync();render()})});
+  document.querySelectorAll('#taxSeg button').forEach(function(b){b.addEventListener('click',function(){S.taxMode=b.dataset.tax;sync();render()})});
+  document.querySelectorAll('#lang button').forEach(function(b){b.addEventListener('click',function(){setLang(b.dataset.lang)})});
+  document.querySelectorAll('input[name=ct]').forEach(function(r){r.addEventListener('change',function(){S.ctMode=Number(r.value);render()})});
+  $('listed').addEventListener('change',function(e){S.listed=e.target.checked;render()});
+  $('reset').addEventListener('click',function(){S=JSON.parse(JSON.stringify(DEFAULTS));sync();render()});
+  $('heat').addEventListener('click',function(e){var b=e.target.closest('button[data-o]');if(!b)return;S.occ=Number(b.dataset.o);S.adr=Number(b.dataset.a);S.caseSel='custom';sync();render()});
+
+  document.querySelectorAll('#tabs button').forEach(function(b){b.addEventListener('click',function(){setTab(b.dataset.tab)})});
+  Object.keys(OKEY).forEach(function(id){$(id).addEventListener('input',function(e){O[OKEY[id]]=Number(e.target.value);$(id+'_o').textContent=OFMT[id](O[OKEY[id]]);renderOwn()})});
+  $('oPlus2').addEventListener('change',function(e){O.plus2=e.target.checked;renderOwn()});
+  $('oSdltRel').addEventListener('change',function(e){O.sdltRel=e.target.checked;renderOwn()});
+  $('oS162').addEventListener('change',function(e){O.s162=e.target.checked;renderOwn()});
+  document.querySelectorAll('#oModeSeg button').forEach(function(b){b.addEventListener('click',function(){O.mode=b.dataset.mode;syncOwn();renderOwn()})});
+  $('oReset').addEventListener('click',function(){O=JSON.parse(JSON.stringify(ODEF));syncOwn();renderOwn()});
+  if(location.hash==='#ownership')TAB='own';
+  applyLang();
+})();
+</script>
+</body>
+</html>
